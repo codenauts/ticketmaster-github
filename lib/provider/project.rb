@@ -11,7 +11,7 @@ module TicketMaster::Provider
           object = object.first
           @system_data = {:client => object} 
           unless object.is_a? Hash
-            hash = {:description => (object.respond_to?(:description) ? object.description : ""),
+            hash = {:description => object.description,
                     :created_at => object.created_at,
                     :updated_at => object.created_at,
                     :name => object.name,
@@ -68,13 +68,17 @@ module TicketMaster::Provider
       def self.find_all(*options)
         repos = []
 
-        user_repos = TicketMaster::Provider::Github.api.repositories.collect { |repository| self.new repository }
-        repos = repos + user_repos
+        repos << TicketMaster::Provider::Github.api.repositories.collect do |repository| 
+          self.new repository
+        end
 
-        org_repos = TicketMaster::Provider::Github.api.organization_repositories.collect { |repository| self.new repository }
-        repos = repos + org_repos
+        TicketMaster::Provider::Github.api.organizations.each do |org|
+          repos << TicketMaster::Provider::Github.api.organization_repositories(org.login).collect do |repository| 
+            self.new repository
+          end if org.login.present?
+        end
 
-        repos
+        repos.flatten.compact
       end
 
       def tickets(*options)
