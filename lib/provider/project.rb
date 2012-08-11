@@ -68,12 +68,12 @@ module TicketMaster::Provider
       def self.find_all(*options)
         repos = []
 
-        repos << TicketMaster::Provider::Github.api.repositories.collect do |repository| 
+        repos << TicketMaster::Provider::Github.api.repositories(nil, { :per_page => 100 }).collect do |repository| 
           self.new repository
         end
 
         TicketMaster::Provider::Github.api.organizations.each do |org|
-          repos << TicketMaster::Provider::Github.api.organization_repositories(org.login).collect do |repository| 
+          repos << TicketMaster::Provider::Github.api.organization_repositories(org.login, { :per_page => 100 }).collect do |repository| 
             self.new repository
           end if org.login.present?
         end
